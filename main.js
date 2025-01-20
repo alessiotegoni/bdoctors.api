@@ -2,8 +2,10 @@
 const dotenv = require('dotenv')
 const express = require('express')
 dotenv.config();
+const doctorRouter = require('./Routes/doctorsRouter');
 const app = express()
 const PORT = process.env.PORT
+
 
 //middlewares
 const errorsHandler = require('./middlewares/errorsHandler')
@@ -14,9 +16,7 @@ app.use(express.json())
 
 
 //routes
-app.get('/', (_, res) => {
-  res.json({ message: 'Server running' })
-})
+app.use('/doctors',doctorRouter);
 
 app.get('/doctors', (_, res) => {
   // console.log('doctors default')
