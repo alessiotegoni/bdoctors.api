@@ -7,8 +7,7 @@ const connection = sql.createConnection({
   database: process.env.DB_DATABASE,
 })
 connection.connect((err) => {
-  if (err) throw err
+  if (err) throw new Error(err)
   console.log('Connected to database')
 })
-
 module.exports = connection
