@@ -1,9 +1,9 @@
 //express base config
 const dotenv = require('dotenv')
 const express = require('express')
-const doctorRouter = require('./Routes/doctorsRouter');
+const doctorRouter = require('./Routes/doctorRoutes')
 
-dotenv.config();
+dotenv.config()
 
 const app = express()
 const PORT = process.env.PORT
@@ -16,8 +16,7 @@ const notFound = require('./middlewares/notFound')
 app.use(express.json())
 
 //routes
-app.use('/doctors', doctorRouter);
-
+app.use('/doctors', doctorRouter)
 
 app.use([notFound, errorsHandler])
 
