@@ -1,9 +1,11 @@
-const express = require("express");
+const express = require('express')
 
-const app = express();
+const app = express()
 
-const PORT = 5000;
+const PORT = 5000
 
-app.use("/doctors");
+app.use('/doctors', () => {
+  console.log('rotta default')
+})
 
-app.listen(PORT, () => console.log(`✅ Server running on PORT: ${PORT}`));
+app.listen(PORT, () => console.log(`✅ Server running on PORT: ${PORT}`))
