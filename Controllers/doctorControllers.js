@@ -18,10 +18,10 @@ function show(req, res) {
     const IdSql = `SELECT * FROM doctors WHERE id = ?`;
     connection.query(IdSql, [id], (err, doctors) => {
         if (err) {
-            return res.status(500).json({ error: "Internal Server Error" });
+            return res.status(500).json({ error: "server error" });
         }
         if (doctors.length === 0) {
-            return res.status(404).json({ error: "Doctor not found" });
+            return res.status(404).json({ error: "Not found" });
         }
         res.status(200).json({ doctors });
     });
