@@ -45,24 +45,40 @@ function storeDoctor(req, res) {
   }
 
   //aggiunta nuovo dottore al database
-  const sql = `INSERT INTO doctors (first_name, last_name, email, phone, address) VALUES (?, ?, ?, ?, ?)`
+  //cerco in database se la mail inserita risulta già registrata
+  const mailSql = `SELECT * FROM doctors WHERE email = ?`
 
-  connection.query(sql, [firstName, lastName, email, phone, address], (err, results) => {
+  connection.query(mailSql, [email], (err, results) => {
     if (err) {
       return res.status(500).json({ message: err.message })
     }
+    if (results.length > 0) {
+      return res.status(400).json({ message: 'email already registered' })
+    }
 
-    const sql2 = `INSERT INTO doctor_specializations (doctor_id, specialization_id) VALUES ?`
+    //se la mail non esiste allora si procede alla creazione di un nuovo dottore
+    const sql = `INSERT INTO doctors (first_name, last_name, email, phone, address) VALUES (?, ?, ?, ?, ?)`
 
-    //array di coppia Dottore-specializzazione che saranno eseguiti in query
-    const values = specializationsIds.map((specialization) => [results.insertId, specialization])
-    console.log('values', values)
+    connection.query(sql, [firstName, lastName, email, phone, address], (err, results) => {
+      if (err) {
+        return res.status(500).json({ message: err.message })
+      }
 
-    connection.query(sql2, [values], (err, results) => {
-      if (err) return res.status(500).json({ message: err.message })
-      return res.status(201).json({
-        message: 'doctor created successfully',
-        newId: results.insertId,
+      const sql2 = `INSERT INTO doctor_specializations (doctor_id, specialization_id) VALUES ?`
+
+      const newId = results.insertId
+
+      //array di coppia [id Dottore - id specializzazione] che saranno eseguiti in query
+      //utilizzando questo metodo con una sola query è possibile inserire piú righe nella tabella ponte
+      const values = specializationsIds.map((specialization) => [newId, specialization])
+
+      //aggiunta nella tabella ponte id dottore creato ed id specializzazioni
+      connection.query(sql2, [values], (err, _) => {
+        if (err) return res.status(500).json({ message: err.message })
+        return res.status(201).json({
+          message: 'doctor created successfully',
+          newId: newId,
+        })
       })
     })
   })
