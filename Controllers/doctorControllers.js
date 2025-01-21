@@ -9,24 +9,32 @@ function index(req, res) {
 }
 
 function show(req, res) {
+  ;``
   const id = parseInt(req.params.id)
   if (isNaN(id)) {
     return res.status(400).json({ error: 'id not found' })
   }
   const IdSql = `SELECT * FROM doctors WHERE id = ?`
-  connection.query(IdSql, [id], (err, doctors) => {
+  connection.query(IdSql, [id], (err, [doctor]) => {
     if (err) {
       return res.status(500).json({ error: 'server error' })
     }
-    if (doctors.length === 0) {
+    if (!doctor) {
       return res.status(404).json({ error: 'Not found' })
     }
-    res.status(200).json({ doctors })
+    res.status(200).json(doctor)
+  })
+}
+
+function getDoctorsSpecializations(_, res) {
+  connection.query('SELECT * FROM specializations', (err, specializations) => {
+    if (err) throw new Error(err.message)
+
+    res.status(200).json(specializations.map((s) => ({ value: s.id, label: s.name })))
   })
 }
 
 function storeDoctor(req, res) {
-  //   console.log(req.body)
   const { firstName, lastName, email, phone, address, specializationsIds } = req.body
 
   if (
@@ -75,10 +83,7 @@ function storeDoctor(req, res) {
       //aggiunta nella tabella ponte id dottore creato ed id specializzazioni
       connection.query(sql2, [values], (err, _) => {
         if (err) return res.status(500).json({ message: err.message })
-        return res.status(201).json({
-          message: 'doctor created successfully',
-          newId: newId,
-        })
+        return res.status(201).json(newId)
       })
     })
   })
@@ -89,7 +94,7 @@ function storeReview(req, res) {
   const doctorId = parseInt(req.params.id)
 
   //recupero parametri dalla body request
-  const { firstName, lastName, rating, text } = req.body
+  const { firstName, lastName, rating, reviewText } = req.body
 
   //campi nome e voto necessari
   if (
@@ -110,17 +115,19 @@ function storeReview(req, res) {
 
   connection.query(
     sql,
-    [firstName.trim(), lastName.trim(), text.trim(), rating, doctorId],
+    [firstName.trim(), lastName.trim(), reviewText.trim(), rating, doctorId],
     (err, results) => {
       if (err) return res.status(500).json({ message: err.message })
 
-      // console.log(results);
-
-      res.status(201).json({
-        message: 'review created successfully',
-        newId: results.insertId,
-      })
+      res.status(201).json(results.insertId)
     }
   )
 }
-module.exports = { index, show, storeReview, storeDoctor }
+
+module.exports = {
+  index,
+  show,
+  getDoctorsSpecializations,
+  storeDoctor,
+  storeReview,
+}
