@@ -1,7 +1,7 @@
 //express base config
 const dotenv = require('dotenv')
 const express = require('express')
-const doctorRouter = require('./Routes/doctorRoutes')
+const doctorRouter = require('./Routes/doctorsRouter')
 
 dotenv.config()
 
