@@ -15,6 +15,6 @@ router.get("/", index);
 router.get("/:id", show);
 
 router.post("/", storeDoctor);
-router.post("/reviews/:id", storeReview);
+router.post("/:id/review", storeReview);
 
 module.exports = router;
