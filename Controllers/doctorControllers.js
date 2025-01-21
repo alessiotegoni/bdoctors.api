@@ -9,6 +9,7 @@ function index(req, res) {
 }
 
 function show(req, res) {
+  ``;
   const id = parseInt(req.params.id);
   if (isNaN(id)) {
     return res.status(400).json({ error: "id not found" });
@@ -36,7 +37,7 @@ function getDoctorsSpecializations(_, res) {
 }
 
 function storeDoctor(req, res) {
-  //   console.log(req.body)
+  
   const { firstName, lastName, email, phone, address, specializationsIds } =
     req.body;
 
@@ -93,10 +94,7 @@ function storeDoctor(req, res) {
         //aggiunta nella tabella ponte id dottore creato ed id specializzazioni
         connection.query(sql2, [values], (err, _) => {
           if (err) return res.status(500).json({ message: err.message });
-          return res.status(201).json({
-            message: "doctor created successfully",
-            newId: newId,
-          });
+          return res.status(201).json(newId);
         });
       }
     );
@@ -108,7 +106,7 @@ function storeReview(req, res) {
   const doctorId = parseInt(req.params.id);
 
   //recupero parametri dalla body request
-  const { firstName, lastName, rating, text } = req.body;
+  const { firstName, lastName, rating, reviewText } = req.body;
 
   //campi nome e voto necessari
   if (
@@ -129,16 +127,11 @@ function storeReview(req, res) {
 
   connection.query(
     sql,
-    [firstName.trim(), lastName.trim(), text.trim(), rating, doctorId],
+    [firstName.trim(), lastName.trim(), reviewText.trim(), rating, doctorId],
     (err, results) => {
       if (err) return res.status(500).json({ message: err.message });
 
-      // console.log(results);
-
-      res.status(201).json({
-        message: "review created successfully",
-        newId: results.insertId,
-      });
+      res.status(201).json(results.insertId);
     }
   );
 }
