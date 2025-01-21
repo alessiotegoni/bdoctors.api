@@ -1,10 +1,6 @@
 //express base config
-const dotenv = require('dotenv')
 const express = require('express')
 const doctorRouter = require('./Routes/doctorsRouter')
-
-dotenv.config()
-
 const app = express()
 const PORT = process.env.PORT
 
@@ -18,6 +14,7 @@ app.use(express.json())
 //routes
 app.use('/doctors', doctorRouter)
 
-app.use([notFound, errorsHandler])
+app.use(errorsHandler)
+app.use(notFound)
 
 app.listen(PORT, () => console.log(`✅ Server running on PORT: ${PORT}`))

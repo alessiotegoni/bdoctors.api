@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "main.js",
   "scripts": {
-    "dev": "node --env-file=.env.local --watch ."
+    "dev": "node --env-file=.env.local --watch main.js"
   },
   "repository": {
     "type": "git",

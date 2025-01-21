@@ -1,8 +1,10 @@
 const express = require('express')
 const router = express.Router()
-const { index, show, storeReview } = require('../Controllers/doctorControllers')
+const { index, show, storeReview, storeDoctor } = require('../Controllers/doctorControllers')
 
 router.get('/', index)
+
+router.post('/', storeDoctor)
 
 router.get('/:id', show)
 
