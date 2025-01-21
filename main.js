@@ -1,7 +1,8 @@
 //express base config
 const dotenv = require('dotenv')
 const express = require('express')
-const doctorRouter = require('./Routes/doctorRoutes')
+const doctorRouter = require('./routes/doctorRouter')
+const cors = require("cors")
 
 dotenv.config()
 
@@ -11,6 +12,10 @@ const PORT = process.env.PORT
 //middlewares
 const errorsHandler = require('./middlewares/errorsHandler')
 const notFound = require('./middlewares/notFound')
+
+// cors
+
+app.use(cors(process.env.FRONTEND_URL))
 
 //body parser
 app.use(express.json())
