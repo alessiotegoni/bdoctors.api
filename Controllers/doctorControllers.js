@@ -16,6 +16,43 @@ function index(req, res) {
   })
 }
 
+// addind filters with name surname and specializations of doctors
+
+function getFilteredDoctors(req, res) {
+  // Retrieve parameters from URL path using req.params
+  const { first_name, last_name, specialization } = req.params;
+
+  const sql = `
+    SELECT 
+      doctors.*, 
+      GROUP_CONCAT(DISTINCT specializations.name) AS specializations
+    FROM doctors
+    JOIN doctor_specializations
+      ON doctors.id = doctor_specializations.doctor_id
+    JOIN specializations
+      ON doctor_specializations.specialization_id = specializations.id
+    WHERE 
+      (? IS NULL OR doctors.first_name LIKE ?)
+      AND (? IS NULL OR doctors.last_name LIKE ?)
+      AND (? IS NULL OR specializations.name LIKE ?)
+    GROUP BY doctors.id;
+  `;
+
+  const values = [
+    first_name || null, first_name ? `%${first_name}%` : null,
+    last_name || null, last_name ? `%${last_name}%` : null,
+    specialization || null, specialization ? `%${specialization}%` : null,
+  ];
+
+  connection.query(sql, values, (err, doctors) => {
+    if (err) {
+      return res.status(500).json({ error: 'error' });
+    }
+    res.json(doctors);
+  });
+}
+
+
 function show(req, res) {
   const id = parseInt(req.params.id);
   if (isNaN(id)) {
@@ -157,4 +194,5 @@ module.exports = {
   getDoctorsSpecializations,
   storeDoctor,
   storeReview,
+  getFilteredDoctors,
 };
