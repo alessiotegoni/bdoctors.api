@@ -10,6 +10,7 @@ function index(req, res) {
                 JOIN specializations
                 ON doctor_specializations.specialization_id = specializations.id
                 GROUP BY doctors.id`;
+
   connection.query(sql, (err, doctors) => {
     if (err) return res.status(404).json({ error: `error` });
     res.json(doctors)
