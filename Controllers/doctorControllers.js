@@ -40,10 +40,18 @@ function storeDoctor(req, res) {
   if (
     !firstName ||
     firstName.length > 50 ||
+    firstName.length < 3 ||
     !lastName ||
     lastName.length > 50 ||
     typeof firstName !== 'string' ||
+    typeof lastName !== 'string' ||
+    !email.includes('@') ||
+    !email.includes('.') ||
+    !phone ||
+    phone.length < 5 ||
+    typeof phone !== 'string' ||
     !address ||
+    address.length < 5 ||
     !specializationsIds
   ) {
     return res.status(400).json({
@@ -100,6 +108,7 @@ function storeReview(req, res) {
   if (
     !firstName ||
     firstName.length > 50 ||
+    firstName.length < 3 ||
     typeof firstName !== 'string' ||
     rating < 1 ||
     rating > 5
