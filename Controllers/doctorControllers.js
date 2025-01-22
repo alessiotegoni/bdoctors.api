@@ -1,7 +1,7 @@
 const connection = require("../data/db");
 
 function index(req, res) {
-  const sql = `SELECT doctors.*, specializations.name as Specialization
+  const sql = `SELECT doctors.*, specializations.name as specialization
               FROM doctors
               JOIN doctor_specializations
               ON doctors.id = doctor_specializations.doctor_id
