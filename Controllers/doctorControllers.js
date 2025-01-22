@@ -1,35 +1,46 @@
 const connection = require("../data/db");
 
 function index(req, res) {
-  const sql = `SELECT * FROM doctors`;
+  const sql = `SELECT doctors.*, specializations.name as Specialization
+              FROM doctors
+              JOIN doctor_specializations
+              ON doctors.id = doctor_specializations.doctor_id
+              JOIN specializations
+              ON doctor_specializations.specialization_id = specializations.id;`;
   connection.query(sql, (err, doctors) => {
-    if (err) throw new Error(err);
-    res.json(doctors);
-  });
+    if (err) return res.status(404).json({ error: `error` });
+    res.json({ doctors })
+  })
 }
 
 function show(req, res) {
-  ``;
   const id = parseInt(req.params.id);
   if (isNaN(id)) {
     return res.status(400).json({ error: "id not found" });
   }
-  const IdSql = `SELECT * FROM doctors WHERE id = ?`;
-  connection.query(IdSql, [id], (err, [doctor]) => {
+  const IdSql = `SELECT doctors.*, specializations.name AS specialization, reviews.*
+                  FROM doctors
+                  JOIN doctor_specializations
+                  ON doctors.id = doctor_specializations.doctor_id
+                  JOIN specializations
+                  ON doctor_specializations.specialization_id = specializations.id
+                  JOIN reviews
+                  ON doctors.id = reviews.doctor_id
+                  WHERE doctors.id = ?`;
+  connection.query(IdSql, [id], (err, doctors) => {
     if (err) {
       return res.status(500).json({ error: "server error" });
     }
-    if (!doctor) {
+    if (doctors.length === 0) {
       return res.status(404).json({ error: "Not found" });
     }
-    res.status(200).json(doctor);
+    res.status(200).json({ doctors });
   });
 }
 
 function getDoctorsSpecializations(_, res) {
   connection.query("SELECT * FROM specializations", (err, specializations) => {
     if (err) throw new Error(err.message);
-
     res
       .status(200)
       .json(specializations.map((s) => ({ value: s.id, label: s.name })));
@@ -37,7 +48,7 @@ function getDoctorsSpecializations(_, res) {
 }
 
 function storeDoctor(req, res) {
-  
+
   const { firstName, lastName, email, phone, address, specializationsIds } =
     req.body;
 

@@ -5,7 +5,7 @@ const {
   getDoctorsSpecializations,
   storeDoctor,
   storeReview,
-} = require("../controllers/doctorControllers");
+} = require("../Controllers/doctorControllers");
 
 const router = express.Router();
 
