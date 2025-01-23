@@ -1,20 +1,23 @@
-const express = require("express");
+const express = require('express');
 const {
   index,
   show,
   getDoctorsSpecializations,
   storeDoctor,
   storeReview,
-} = require("../controllers/doctorControllers");
+  getFilteredDoctors,
+} = require('../controllers/doctorControllers');
 
 const router = express.Router();
 
-router.get("/specializations", getDoctorsSpecializations);
+router.get('/', index);
+router.get('/specializations', getDoctorsSpecializations);
 
-router.get("/", index);
-router.get("/:id", show);
+router.get('/:id', show);
+router.get('/:first_name?/:last_name?/:specializations?', getFilteredDoctors);
 
-router.post("/", storeDoctor);
-router.post("/reviews/:id", storeReview);
+router.post('/', storeDoctor);
+
+router.post('/:id/review', storeReview);
 
 module.exports = router;
