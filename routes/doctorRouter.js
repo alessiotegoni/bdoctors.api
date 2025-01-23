@@ -5,47 +5,18 @@ const {
   getDoctorsSpecializations,
   storeDoctor,
   storeReview,
-} = require('../Controllers/doctorControllers');
-
-//middleware validazione input
-const validateInput = require('../middlewares/validateInput');
-
-const rules = {
-  firstName: {
-    min: 3,
-    max: 50,
-  },
-  lastName: {
-    min: 3,
-    max: 50,
-  },
-  email: {
-    min: 3,
-    max: 50,
-    isRequired: ['@', '.'],
-  },
-  phone: {
-    min: 3,
-    max: 20,
-    //controllo che solo il primo carattere sia un +
-    startsWith: ['+'],
-    specialCharacters: ['+'],
-  },
-  address: {
-    min: 5,
-    max: 255,
-    startsWith: ['Via', 'Piazza'],
-  },
-};
+  getFilteredDoctors,
+} = require('../controllers/doctorControllers');
 
 const router = express.Router();
-
-router.get('/specializations', getDoctorsSpecializations);
 
 router.get('/', index);
 router.get('/:id', show);
 
-router.post('/', validateInput, storeDoctor);
+router.get('/specializations', getDoctorsSpecializations);
+router.get('/:first_name?/:last_name?/:specializations?', getFilteredDoctors);
+
+router.post('/', storeDoctor);
 router.post('/:id/review', storeReview);
 
 module.exports = router;
