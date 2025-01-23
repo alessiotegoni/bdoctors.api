@@ -1,21 +1,7 @@
 const connection = require("../data/db");
 
 function index(req, res) {
-  
   const sql = `SELECT 
-    doctors.*, 
-    GROUP_CONCAT(DISTINCT specializations.name ORDER BY specializations.name SEPARATOR ', ') AS specializations,
-    AVG(reviews.rating) AS avg_rating
-FROM doctors
-JOIN doctor_specializations
-    ON doctors.id = doctor_specializations.doctor_id
-JOIN specializations
-    ON doctor_specializations.specialization_id = specializations.id
-LEFT JOIN reviews
-    ON doctors.id = reviews.doctor_id
-GROUP BY doctors.id`;
-  
-    const sql = `SELECT 
                 doctors.*, 
                 GROUP_CONCAT(DISTINCT specializations.name) AS specializations
                 FROM doctors
@@ -31,29 +17,29 @@ GROUP BY doctors.id`;
   });
 }
 
-
 // addind filters with name surname and specializations of doctors
 
 function getFilteredDoctors(req, res) {
   // Retrieve parameters from URL path using req.query
-  const { first_name, last_name, specialization } = req.query;
+  const { first_name, last_name, email, specialization } = req.query;
 
   const sql = `SELECT 
     doctors.*, 
     GROUP_CONCAT(DISTINCT specializations.name ORDER BY specializations.name SEPARATOR ', ') AS specializations,
     AVG(reviews.rating) AS Rating
-FROM doctors
-JOIN doctor_specializations
+    FROM doctors
+    JOIN doctor_specializations
     ON doctors.id = doctor_specializations.doctor_id
-JOIN specializations
+    JOIN specializations
     ON doctor_specializations.specialization_id = specializations.id
-LEFT JOIN reviews
+  LEFT JOIN reviews
     ON doctors.id = reviews.doctor_id
 GROUP BY doctors.id`;
 
   const values = [
     first_name || null, first_name ? `%${first_name}%` : null,
     last_name || null, last_name ? `%${last_name}%` : null,
+    email || null, email ? `%${email}%` : null,
     specialization || null, specialization ? `%${specialization}%` : null,
   ];
 
@@ -65,22 +51,23 @@ GROUP BY doctors.id`;
   });
 }
 
-
 function show(req, res) {
   const id = parseInt(req.params.id);
   if (isNaN(id)) {
     return res.status(400).json({ error: "id not found" });
   }
+
   const IdSql = `SELECT 
-                  doctors.*, 
-                  GROUP_CONCAT(DISTINCT specializations.name) AS specializations
-                  FROM doctors
-                  JOIN doctor_specializations
-                  ON doctors.id = doctor_specializations.doctor_id
-                  JOIN specializations
-                  ON doctor_specializations.specialization_id = specializations.id
-                  WHERE doctors.id = ?
-                  GROUP BY doctors.id`;
+  doctors.*, 
+  GROUP_CONCAT(DISTINCT specializations.name) AS specializations
+  FROM doctors
+  JOIN doctor_specializations
+  ON doctors.id = doctor_specializations.doctor_id
+  JOIN specializations
+  ON doctor_specializations.specialization_id = specializations.id
+  WHERE doctors.id = ?
+  GROUP BY doctors.id`;
+
   connection.query(IdSql, [id], (err, doctors) => {
     if (err) {
       return res.status(500).json({ error: "server error" });
@@ -88,9 +75,15 @@ function show(req, res) {
     if (doctors.length === 0) {
       return res.status(404).json({ error: "Not found" });
     }
-    res.status(200).json(doctors);
+    const doctor = doctors[0];
+
+    if (doctor.specializations) {
+      doctor.specializations = doctor.specializations.split(',');
+    }
+    return res.status(200).json(doctor);
   });
 }
+
 
 function getDoctorsSpecializations(_, res) {
   connection.query("SELECT * FROM specializations", (err, specializations) => {
