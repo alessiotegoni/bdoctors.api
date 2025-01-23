@@ -5,14 +5,18 @@ const {
   getDoctorsSpecializations,
   storeDoctor,
   storeReview,
+  getFilteredDoctors,
 } = require("../Controllers/doctorControllers");
 
 const router = express.Router();
 
 router.get("/specializations", getDoctorsSpecializations);
+router.get('/:first_name?/:last_name?/:specializations?', getFilteredDoctors);
+
 
 router.get("/", index);
 router.get("/:id", show);
+
 
 router.post("/", storeDoctor);
 router.post("/:id/review", storeReview);

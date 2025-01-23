@@ -1,6 +1,20 @@
 const connection = require("../data/db");
 
 function index(req, res) {
+  
+  const sql = `SELECT 
+    doctors.*, 
+    GROUP_CONCAT(DISTINCT specializations.name ORDER BY specializations.name SEPARATOR ', ') AS specializations,
+    AVG(reviews.rating) AS avg_rating
+FROM doctors
+JOIN doctor_specializations
+    ON doctors.id = doctor_specializations.doctor_id
+JOIN specializations
+    ON doctor_specializations.specialization_id = specializations.id
+LEFT JOIN reviews
+    ON doctors.id = reviews.doctor_id
+GROUP BY doctors.id`;
+  
     const sql = `SELECT 
                 doctors.*, 
                 GROUP_CONCAT(DISTINCT specializations.name) AS specializations
@@ -12,10 +26,45 @@ function index(req, res) {
                 GROUP BY doctors.id`;
 
   connection.query(sql, (err, doctors) => {
-    if (err) return res.status(404).json({ error: `error` });
-    res.json(doctors)
-  })
+    if (err) res.status(500).json({ err: 'error' });
+    res.json(doctors);
+  });
 }
+
+
+// addind filters with name surname and specializations of doctors
+
+function getFilteredDoctors(req, res) {
+  // Retrieve parameters from URL path using req.query
+  const { first_name, last_name, specialization } = req.query;
+
+  const sql = `SELECT 
+    doctors.*, 
+    GROUP_CONCAT(DISTINCT specializations.name ORDER BY specializations.name SEPARATOR ', ') AS specializations,
+    AVG(reviews.rating) AS Rating
+FROM doctors
+JOIN doctor_specializations
+    ON doctors.id = doctor_specializations.doctor_id
+JOIN specializations
+    ON doctor_specializations.specialization_id = specializations.id
+LEFT JOIN reviews
+    ON doctors.id = reviews.doctor_id
+GROUP BY doctors.id`;
+
+  const values = [
+    first_name || null, first_name ? `%${first_name}%` : null,
+    last_name || null, last_name ? `%${last_name}%` : null,
+    specialization || null, specialization ? `%${specialization}%` : null,
+  ];
+
+  connection.query(sql, values, (err, doctors) => {
+    if (err) {
+      return res.status(500).json({ error: 'error' });
+    }
+    res.json(doctors);
+  });
+}
+
 
 function show(req, res) {
   const id = parseInt(req.params.id);
@@ -158,4 +207,5 @@ module.exports = {
   getDoctorsSpecializations,
   storeDoctor,
   storeReview,
+  getFilteredDoctors,
 };
