@@ -1,5 +1,5 @@
 function notFound(_, res) {
- throw new Error("Pagina non trovata")
+  res.status(404).json({ message: 'page not found' })
 }
 
 module.exports = notFound
