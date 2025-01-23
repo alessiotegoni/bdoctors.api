@@ -153,7 +153,7 @@ function validateInput(req, res, next) {
     // Se ci sono errori, passa l'errore al middleware di gestione degli errori
     console.log(errors);
     if (Object.values(errors).some((err) => err.length > 0)) {
-      return next({ status: 400, message: errors[key], errors });
+      return res.status(400).json({ message: errors[key] });
     }
   }
 
