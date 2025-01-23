@@ -9,7 +9,7 @@ function index(req, res) {
               ON doctor_specializations.specialization_id = specializations.id;`;
   connection.query(sql, (err, doctors) => {
     if (err) return res.status(404).json({ error: `error` });
-    res.json({ doctors })
+    res.json(doctors)
   })
 }
 
