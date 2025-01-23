@@ -1,6 +1,7 @@
 const connection = require("../data/db");
 
 function index(req, res) {
+  
   const sql = `SELECT 
     doctors.*, 
     GROUP_CONCAT(DISTINCT specializations.name ORDER BY specializations.name SEPARATOR ', ') AS specializations,
@@ -14,6 +15,16 @@ LEFT JOIN reviews
     ON doctors.id = reviews.doctor_id
 GROUP BY doctors.id`;
   
+    const sql = `SELECT 
+                doctors.*, 
+                GROUP_CONCAT(DISTINCT specializations.name) AS specializations
+                FROM doctors
+                JOIN doctor_specializations
+                ON doctors.id = doctor_specializations.doctor_id
+                JOIN specializations
+                ON doctor_specializations.specialization_id = specializations.id
+                GROUP BY doctors.id`;
+
   connection.query(sql, (err, doctors) => {
     if (err) res.status(500).json({ err: 'error' });
     res.json(doctors);
