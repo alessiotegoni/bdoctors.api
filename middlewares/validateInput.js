@@ -13,7 +13,7 @@ const rules = {
   email: {
     min: 3,
     max: 50,
-    isRequired: ['@', '.'],
+    isRequired: ['@', '.com'],
   },
   phone: {
     min: 3,
@@ -65,7 +65,7 @@ function validateAddress(errors, key, value, startsWith = []) {
   return errors;
 }
 
-function validatePhone(errors, value) {
+function validatePhone(errors, value, key) {
   //ciclo for per il controllo di ogni carattere
   for (let i = 0; i < value.length; i++) {
     //controllo che nel numero non sia presente il simbolo + ma che possa esserlo solo all'inizio
@@ -136,10 +136,11 @@ function validateInput(req, res, next) {
 
     //controllo phone
     if (key === 'phone') {
-      validatePhone(errors, value);
+      validatePhone(errors, value, key);
     }
 
     // Se ci sono errori, passa l'errore al middleware di gestione degli errori
+    console.log(errors);
     if (Object.values(errors).some((err) => err.length > 0)) {
       return next({ status: 400, message: errors[key], errors });
     }
