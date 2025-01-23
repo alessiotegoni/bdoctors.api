@@ -79,14 +79,14 @@ function show(req, res) {
                   ON doctor_specializations.specialization_id = specializations.id
                   WHERE doctors.id = ?
                   GROUP BY doctors.id`;
-  connection.query(IdSql, [id], (err, doctors) => {
+  connection.query(IdSql, [id], (err, [doctor]) => {
     if (err) {
       return res.status(500).json({ error: "server error" });
     }
-    if (doctors.length === 0) {
+    if (doctor.length === 0) {
       return res.status(404).json({ error: "Not found" });
     }
-    res.status(200).json(doctors);
+    res.status(200).json(doctor);
   });
 }
 
