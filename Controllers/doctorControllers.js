@@ -1,6 +1,14 @@
 const connection = require("../data/db");
 
 function index(req, res) {
+
+  const { doctor, specializations, min_rating } = req.query
+
+  // doctor is first_name, last_name concatenati or email
+  // specializations is an array of string with specializationsId
+  // min rating is a string
+
+
   const sql = `SELECT
     doctors.*,
     GROUP_CONCAT(DISTINCT specializations.name ORDER BY specializations.name SEPARATOR ', ') AS specializations,
@@ -29,7 +37,7 @@ function getFilteredDoctors(req, res) {
   const sql = `SELECT
     doctors.*,
     GROUP_CONCAT(DISTINCT specializations.name ORDER BY specializations.name SEPARATOR ', ') AS specializations,
-    AVG(reviews.rating) AS Rating
+    AVG(reviews.rating) AS rating
 FROM doctors
 JOIN doctor_specializations
     ON doctors.id = doctor_specializations.doctor_id
