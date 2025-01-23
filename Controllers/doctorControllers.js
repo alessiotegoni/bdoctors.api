@@ -48,29 +48,6 @@ function getDoctorsSpecializations(_, res) {
 function storeDoctor(req, res) {
   const { firstName, lastName, email, phone, address, specializationsIds } = req.body;
 
-  // if (
-  //   !firstName ||
-  //   firstName.length > 50 ||
-  //   firstName.length < 3 ||
-  //   !lastName ||
-  //   lastName.length > 50 ||
-  //   typeof firstName !== 'string' ||
-  //   typeof lastName !== 'string' ||
-  //   !email.includes('@') ||
-  //   !email.includes('.') ||
-  //   !phone ||
-  //   phone.length < 5 ||
-  //   typeof phone !== 'string' ||
-  //   !address ||
-  //   address.length < 5 ||
-  //   !specializationsIds
-  // ) {
-  //   return res.status(400).json({
-  //     error: 'Missing required fields',
-  //     message: 'First name, last name, specializations and address are required',
-  //   });
-  // }
-
   //aggiunta nuovo dottore al database
   //cerco in database se la mail inserita risulta già registrata
   const mailSql = `SELECT * FROM doctors WHERE email = ?`;
