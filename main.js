@@ -1,10 +1,9 @@
 //express base config
-// const dotenv = require('dotenv');
 const express = require('express');
 const doctorRouter = require('./routes/doctorRouter');
 const cors = require('cors');
 
-// dotenv.config();
+// dotenv.config()
 
 const app = express();
 const PORT = process.env.PORT;

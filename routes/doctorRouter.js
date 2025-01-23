@@ -5,18 +5,18 @@ const {
   getDoctorsSpecializations,
   storeDoctor,
   storeReview,
-  getFilteredDoctors,
-} = require('../controllers/doctorControllers');
+  // getFilteredDoctors,
+} = require('../Controllers/doctorControllers.js');
 
 const router = express.Router();
 
 router.get('/', index);
-router.get('/specializations', getDoctorsSpecializations);
-
 router.get('/:id', show);
-router.post('/:id/review', storeReview);
+
+router.get('/specializations', getDoctorsSpecializations);
 // router.get('/:first_name?/:last_name?/:specializations?', getFilteredDoctors);
 
 router.post('/', storeDoctor);
+router.post('/:id/review', storeReview);
 
 module.exports = router;

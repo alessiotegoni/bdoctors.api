@@ -1,8 +1,8 @@
 function errorsHandler(err, _, res, _) {
   if (err)
-    res.status(500).json({
+    res.status(err.status).json({
       message: err.message,
-    })
+    });
 }
 
-module.exports = errorsHandler
+module.exports = errorsHandler;

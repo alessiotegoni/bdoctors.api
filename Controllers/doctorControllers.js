@@ -77,24 +77,23 @@ function show(req, res) {
   if (isNaN(id)) {
     return res.status(400).json({ error: 'id not found' });
   }
-  const IdSql = `SELECT
-                  doctors.*,
-                  GROUP_CONCAT(DISTINCT specializations.name) AS specializations
+  const IdSql = `SELECT doctors.*, specializations.name AS specialization, reviews.*
                   FROM doctors
                   JOIN doctor_specializations
                   ON doctors.id = doctor_specializations.doctor_id
                   JOIN specializations
                   ON doctor_specializations.specialization_id = specializations.id
-                  WHERE doctors.id = ?
-                  GROUP BY doctors.id`;
-  connection.query(IdSql, [id], (err, [doctor]) => {
+                  JOIN reviews
+                  ON doctors.id = reviews.doctor_id
+                  WHERE doctors.id = ?`;
+  connection.query(IdSql, [id], (err, doctors) => {
     if (err) {
       return res.status(500).json({ error: 'server error' });
     }
-    if (doctor.length === 0) {
+    if (doctors.length === 0) {
       return res.status(404).json({ error: 'Not found' });
     }
-    res.status(200).json(doctor);
+    res.status(200).json({ doctors });
   });
 }
 
@@ -114,13 +113,16 @@ function storeDoctor(req, res) {
     firstName.length < 3 ||
     !lastName ||
     lastName.length > 50 ||
-    lastName.length < 3 ||
     typeof firstName !== 'string' ||
     typeof lastName !== 'string' ||
-    !address ||
-    !specializationsIds ||
     !email.includes('@') ||
-    !email.includes('.')
+    !email.includes('.') ||
+    !phone ||
+    phone.length < 5 ||
+    typeof phone !== 'string' ||
+    !address ||
+    address.length < 5 ||
+    !specializationsIds
   ) {
     return res.status(400).json({
       error: 'Missing required fields',
@@ -178,6 +180,7 @@ function storeReview(req, res) {
   if (
     !firstName ||
     firstName.length > 50 ||
+    firstName.length < 3 ||
     typeof firstName !== 'string' ||
     rating < 1 ||
     rating > 5
@@ -208,5 +211,4 @@ module.exports = {
   getDoctorsSpecializations,
   storeDoctor,
   storeReview,
-  getFilteredDoctors,
 };
