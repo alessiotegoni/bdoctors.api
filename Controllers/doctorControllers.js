@@ -78,10 +78,11 @@ function show(req, res) {
                   WHERE doctors.id = ?
                   GROUP BY doctors.id`;
   connection.query(IdSql, [id], (err, [doctor]) => {
+    console.log(doctor);
     if (err) {
       return res.status(500).json({ error: 'server error' });
     }
-    if (doctor.length === 0) {
+    if (!doctor) {
       return res.status(404).json({ error: 'Not found' });
     }
     res.status(200).json(doctor);
@@ -98,26 +99,50 @@ function getDoctorsSpecializations(_, res) {
 function storeDoctor(req, res) {
   const { firstName, lastName, email, phone, address, specializationsIds } = req.body;
 
+  if (firstName.length > 50 || firstName.length < 3 || typeof firstName !== 'string') {
+    return res.status(400).json({
+      error: 'Invalid first name',
+      message: 'Il campo Nome deve avere un valore tra 3 e 50 caratteri',
+    });
+  }
+
+  if (lastName.length > 50 || lastName.length < 3 || typeof firstName !== 'string') {
+    return res.status(400).json({
+      error: 'Invalid last name',
+      message: 'Il campo Cognome deve avere un valore tra 3 e 50 caratteri',
+    });
+  }
+
+  if (!email.includes('@') || !email.includes('.com')) {
+    return res.status(400).json({
+      error: 'Invalid email',
+      message: 'Il campo Email deve includere i caratteri @ e .com',
+    });
+  }
+
   if (
-    !firstName ||
-    firstName.length > 50 ||
-    firstName.length < 3 ||
-    !lastName ||
-    lastName.length > 50 ||
-    typeof firstName !== 'string' ||
-    typeof lastName !== 'string' ||
-    !email.includes('@') ||
-    !email.includes('.') ||
-    !phone ||
     phone.length < 5 ||
     typeof phone !== 'string' ||
-    !address ||
-    address.length < 5 ||
-    !specializationsIds
+    (phone.includes('+') && phone.indexOf('+') !== 0)
   ) {
     return res.status(400).json({
-      error: 'Missing required fields',
-      message: 'First name, last name, specializations and address are required',
+      error: 'Invalid phone number',
+      message:
+        'Il campo Telefono deve avere un valore numerico di almeno 5 caratteri e il simbolo + puo essere usato solo come prefisso',
+    });
+  }
+
+  if (
+    address.length > 255 ||
+    address.length < 5 ||
+    typeof address !== 'string' ||
+    (!address.toLowerCase().startsWith('via') && !address.toLowerCase().startsWith('piazza'))
+  ) {
+    console.log(address.startsWith('Via'), address.startsWith('Piazza'));
+    return res.status(400).json({
+      error: 'Invalid address',
+      message:
+        'Il campo Indirizzo deve avere un valore tra 5 e 255 caratteri e deve iniziare con Via o Piazza',
     });
   }
 
@@ -176,7 +201,7 @@ function storeReview(req, res) {
   ) {
     return res.status(400).json({
       error: 'Missing required fields',
-      message: 'name and vote are required',
+      message: 'first name and vote are required',
     });
   }
 
@@ -185,8 +210,9 @@ function storeReview(req, res) {
 
   connection.query(
     sql,
-    [firstName.trim(), lastName.trim(), reviewText.trim(), rating, doctorId],
+    [firstName.trim(), lastName.trim(), reviewText && reviewText.trim(), rating, doctorId],
     (err, results) => {
+      if (!results) return res.status(404).json({ message: 'doctor not found' });
       if (err) return res.status(500).json({ message: err.message });
 
       res.status(201).json(results.insertId);
