@@ -2,14 +2,17 @@ const connection = require("../data/db");
 
 function index(req, res) {
   const sql = `SELECT 
-                doctors.*, 
-                GROUP_CONCAT(DISTINCT specializations.name) AS specializations
-                FROM doctors
-                JOIN doctor_specializations
-                ON doctors.id = doctor_specializations.doctor_id
-                JOIN specializations
-                ON doctor_specializations.specialization_id = specializations.id
-                GROUP BY doctors.id`;
+    doctors.*, 
+    GROUP_CONCAT(DISTINCT specializations.name ORDER BY specializations.name SEPARATOR ', ') AS specializations,
+    AVG(reviews.rating) AS Rating
+    FROM doctors
+    JOIN doctor_specializations
+    ON doctors.id = doctor_specializations.doctor_id
+    JOIN specializations
+    ON doctor_specializations.specialization_id = specializations.id
+    LEFT JOIN reviews
+    ON doctors.id = reviews.doctor_id
+    GROUP BY doctors.id`;
 
   connection.query(sql, (err, doctors) => {
     if (err) res.status(500).json({ err: 'error' });
@@ -50,12 +53,15 @@ GROUP BY doctors.id`;
     res.json(doctors);
   });
 }
-
+ 
 function show(req, res) {
   const id = parseInt(req.params.id);
   if (isNaN(id)) {
+    console.log("Invalid ID:", req.params.id);
     return res.status(400).json({ error: "id not found" });
   }
+
+  console.log("Fetching doctor with ID:", id);
 
   const IdSql = `SELECT 
   doctors.*, 
@@ -72,18 +78,21 @@ function show(req, res) {
     if (err) {
       return res.status(500).json({ error: "server error" });
     }
+
     if (doctors.length === 0) {
       return res.status(404).json({ error: "Not found" });
     }
+
     const doctor = doctors[0];
 
     if (doctor.specializations) {
       doctor.specializations = doctor.specializations.split(',');
+    } else {
+      doctor.specializations = [];
     }
     return res.status(200).json(doctor);
   });
 }
-
 
 function getDoctorsSpecializations(_, res) {
   connection.query("SELECT * FROM specializations", (err, specializations) => {
