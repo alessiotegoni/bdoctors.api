@@ -18,21 +18,27 @@ JOIN specializations
     ON doctor_specializations.specialization_id = specializations.id
 LEFT JOIN reviews
     ON doctors.id = reviews.doctor_id
-GROUP BY doctors.id`;
+    GROUP BY doctors.id`;
 
-  const filter = req.query.filter;
-  console.log(filter);
+  const { doctor, specializations, min_rating } = req.query;
 
-  if (filter) {
-    sql = `SELECT * FROM doctors WHERE first_name OR email LIKE ?;`;
+  console.log(req.query);
 
-    console.log(filter);
+  if (doctor) {
+    console.log(doctor, specializations, min_rating);
+    sql += ` HAVING concat(first_name, last_name) OR email LIKE ?;`;
 
-    connection.query(sql, `%${[filter]}%`, (err, doctors) => {
-      // console.log(err);
+    // console.log(sql);
+
+    const filter = [doctor, specializations, min_rating];
+
+    connection.query(sql, `%${filter}%`, (err, doctors) => {
       console.log(doctors);
       if (err) {
         return res.status(500).json({ error: 'error' });
+      }
+      if (!doctors) {
+        return res.status(404).json({ error: 'doctors not found' });
       }
       res.json(doctors);
     });
@@ -46,31 +52,6 @@ GROUP BY doctors.id`;
 }
 
 // addind filters with name surname and specializations of doctors
-
-function getFilteredDoctors(req, res) {
-  // Retrieve parameters from URL path using req.query
-  const { first_name, last_name, specialization } = req.query;
-
-  const sql = `SELECT * FROM doctors WHERE first_name or email LIKE ?;`;
-
-  // const values = [
-  //   first_name || null,
-  //   first_name ? `%${first_name}%` : null,
-  //   last_name || null,
-  //   last_name ? `%${last_name}%` : null,
-  //   specialization || null,
-  //   specialization ? `%${specialization}%` : null,
-  // ];
-
-  const value = req.query.firstName || req.query.email;
-
-  connection.query(sql, value, (err, doctors) => {
-    if (err) {
-      return res.status(500).json({ error: 'error' });
-    }
-    res.json(doctors);
-  });
-}
 
 function show(req, res) {
   const id = parseInt(req.params.id);
