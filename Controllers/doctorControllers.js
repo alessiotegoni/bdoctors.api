@@ -1,46 +1,55 @@
 const connection = require("../data/db");
 
 function index(req, res) {
-  // const { firstName } = req.query;
-
-  // doctor is first_name, last_name concatenati or email
-  // specializations is an array of string with specializationsId
-  // min rating is a string
-
-  let sql = `SELECT
-    doctors.*,
-    GROUP_CONCAT(DISTINCT specializations.name ORDER BY specializations.name SEPARATOR ', ') AS specializations,
-    AVG(reviews.rating) AS avg_rating
-FROM doctors
-JOIN doctor_specializations
-    ON doctors.id = doctor_specializations.doctor_id
-JOIN specializations
-    ON doctor_specializations.specialization_id = specializations.id
-LEFT JOIN reviews
-    ON doctors.id = reviews.doctor_id
-    GROUP BY doctors.id`;
+  let sql = `
+    SELECT
+      doctors.*,
+      GROUP_CONCAT(DISTINCT specializations.name ORDER BY specializations.name SEPARATOR ', ') AS specializations,
+      ROUND(AVG(reviews.rating), 2) AS avg_rating
+    FROM doctors
+    JOIN doctor_specializations
+      ON doctors.id = doctor_specializations.doctor_id
+    JOIN specializations
+      ON doctor_specializations.specialization_id = specializations.id
+    LEFT JOIN reviews
+      ON doctors.id = reviews.doctor_id
+    GROUP BY doctors.id
+  `;
 
   const { doctor, specializations, min_rating } = req.query;
 
-  console.log(req.query);
+  let havingConditions = [];
+  let queryParams = [];
 
   if (doctor) {
-    sql += ` HAVING concat(first_name, last_name) OR email LIKE ?;`;
-
-    console.log(sql);
-
-    connection.query(sql, `%${[doctor]}%`, (err, doctors) => {
-      console.log(doctors);
-      if (err) {
-        return res.status(500).json({ error: "error" });
-      }
-      res.json(doctors);
-    });
-    return;
+    havingConditions.push(
+      `(LOWER(CONCAT(doctors.first_name, ' ', doctors.last_name)) LIKE ? OR doctors.email LIKE ?)`
+    );
+    queryParams.push(`%${doctor}%`, `%${doctor}%`);
   }
 
-  connection.query(sql, (err, doctors) => {
-    if (err) res.status(500).json({ err: "error" });
+  if (specializations?.length) {
+    const specializationIds = specializations.map((id) => parseInt(id.trim()));
+    havingConditions.push(
+      `GROUP_CONCAT(DISTINCT specializations.id ORDER BY specializations.id SEPARATOR ',') LIKE ?`
+    );
+    queryParams.push(`%${specializationIds.join(",")}%`);
+  }
+
+  if (min_rating) {
+    havingConditions.push(`AVG(reviews.rating) >= ?`);
+    queryParams.push(parseFloat(min_rating));
+  }
+
+  if (havingConditions.length > 0) {
+    sql += ` HAVING ${havingConditions.join(" AND ")}`;
+  }
+
+  connection.query(sql, queryParams, (err, doctors) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: "error" });
+    }
     res.json(doctors);
   });
 }
@@ -156,8 +165,6 @@ function storeDoctor(req, res) {
 function storeReview(req, res) {
   //id del medico
   const doctorId = parseInt(req.params.id);
-
-  console.log(doctorId);
 
   //recupero parametri dalla body request
   const { firstName, lastName, rating, reviewText } = req.body;
