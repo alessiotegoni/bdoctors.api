@@ -87,17 +87,17 @@ function show(req, res) {
 }
 
 function storeDoctor(req, res) {
-  const { firstName, lastName, email, phone, address, specializationsIds } =
+  const { first_name, last_name, email, phone, address, specializationsIds } =
     req.body;
 
   if (
-    !firstName ||
-    firstName.length > 50 ||
-    firstName.length < 3 ||
-    !lastName ||
-    lastName.length > 50 ||
-    typeof firstName !== "string" ||
-    typeof lastName !== "string" ||
+    !first_name ||
+    first_name.length > 50 ||
+    first_name.length < 3 ||
+    !last_name ||
+    last_name.length > 50 ||
+    typeof first_name !== "string" ||
+    typeof last_name !== "string" ||
     !email.includes("@") ||
     !email.includes(".") ||
     !phone ||
@@ -131,7 +131,7 @@ function storeDoctor(req, res) {
 
     connection.query(
       sql,
-      [firstName, lastName, email, phone, address],
+      [first_name, last_name, email, phone, address],
       (err, results) => {
         if (err) {
           return res.status(500).json({ message: err.message });
@@ -163,14 +163,14 @@ function storeReview(req, res) {
   const doctorId = parseInt(req.params.id);
 
   //recupero parametri dalla body request
-  const { firstName, lastName, rating, reviewText } = req.body;
+  const { first_name, last_name, rating, review_text } = req.body;
 
   //campi nome e voto necessari
   if (
-    !firstName ||
-    firstName.length > 50 ||
-    firstName.length < 3 ||
-    typeof firstName !== "string" ||
+    !first_name ||
+    first_name.length > 50 ||
+    first_name.length < 3 ||
+    typeof first_name !== "string" ||
     rating < 1 ||
     rating > 5
   ) {
@@ -186,9 +186,9 @@ function storeReview(req, res) {
   connection.query(
     sql,
     [
-      firstName.trim(),
-      lastName.trim(),
-      reviewText && reviewText.trim(),
+      first_name.trim(),
+      last_name.trim(),
+      review_text && review_text.trim(),
       rating,
       doctorId,
     ],
