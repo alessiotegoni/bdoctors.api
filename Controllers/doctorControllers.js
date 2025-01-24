@@ -61,7 +61,7 @@ function show(req, res) {
   if (isNaN(id)) {
     return res.status(400).json({ error: "id not found" });
   }
-  const IdSql = `SELECT doctors.*, specializations.name AS specialization, reviews.*
+  const IdSql = `SELECT doctors.*, GROUP_CONCAT(DISTINCT specializations.name ORDER BY specializations.name SEPARATOR ', ') AS specializations, reviews.*
                   FROM doctors
                   JOIN doctor_specializations
                   ON doctors.id = doctor_specializations.doctor_id
@@ -69,16 +69,20 @@ function show(req, res) {
                   ON doctor_specializations.specialization_id = specializations.id
                   JOIN reviews
                   ON doctors.id = reviews.doctor_id
-                  WHERE doctors.id = ?`;
-  connection.query(IdSql, [id], (err, [doctors]) => {
-    if (err) {
-      return res.status(500).json({ error: "server error" });
-    }
-
-    if (!doctors) {
+                  WHERE doctors.id = ?
+                  `;
+  connection.query(IdSql, [id], (err, doctor) => {
+    if (!doctor?.length) {
       return res.status(404).json({ error: "Not found" });
     }
-    res.status(200).json(doctors);
+
+    connection.query(
+      "SELECT * FROM reviews WHERE doctor_id = ?",
+      [doctor[0].id],
+      (err, reviews) => {
+        res.status(200).json({ ...doctor[0], reviews: reviews ?? [] });
+      }
+    );
   });
 }
 
