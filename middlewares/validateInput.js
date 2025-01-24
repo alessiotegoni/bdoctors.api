@@ -44,7 +44,6 @@ function validateEmail(errors, key, value, isRequired = []) {
     //controlla per ogni valore contenuto nell'oggetto rules, se i caratteri indicati alla chiave 'isRequired' sono presenti all'interno della chiave dell'oggetto input
     if (!value.includes(isRequired[i])) {
       // console.log('invio header email function');
-      // errors[key].push(`la mail deve contenere ${isRequired[i]}`);
 
       errors[key] = `la mail deve contenere ${isRequired[i]}`;
     }

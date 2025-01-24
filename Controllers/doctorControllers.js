@@ -1,15 +1,74 @@
 const connection = require('../data/db');
 
 function index(req, res) {
-  const sql = `SELECT doctors.*, specializations.name as specialization
-              FROM doctors
-              JOIN doctor_specializations
-              ON doctors.id = doctor_specializations.doctor_id
-              JOIN specializations
-              ON doctor_specializations.specialization_id = specializations.id;`;
+  // const { firstName } = req.query;
+
+  // doctor is first_name, last_name concatenati or email
+  // specializations is an array of string with specializationsId
+  // min rating is a string
+
+  let sql = `SELECT
+    doctors.*,
+    GROUP_CONCAT(DISTINCT specializations.name ORDER BY specializations.name SEPARATOR ', ') AS specializations,
+    AVG(reviews.rating) AS avg_rating
+FROM doctors
+JOIN doctor_specializations
+    ON doctors.id = doctor_specializations.doctor_id
+JOIN specializations
+    ON doctor_specializations.specialization_id = specializations.id
+LEFT JOIN reviews
+    ON doctors.id = reviews.doctor_id
+GROUP BY doctors.id`;
+
+  const filter = req.query.filter;
+  console.log(filter);
+
+  if (filter) {
+    sql = `SELECT * FROM doctors WHERE first_name OR email LIKE ?;`;
+
+    console.log(filter);
+
+    connection.query(sql, `%${[filter]}%`, (err, doctors) => {
+      // console.log(err);
+      console.log(doctors);
+      if (err) {
+        return res.status(500).json({ error: 'error' });
+      }
+      res.json(doctors);
+    });
+    return;
+  }
+
   connection.query(sql, (err, doctors) => {
-    if (err) return res.status(404).json({ error: `error` });
-    res.json({ doctors });
+    if (err) res.status(500).json({ err: 'error' });
+    res.json(doctors);
+  });
+}
+
+// addind filters with name surname and specializations of doctors
+
+function getFilteredDoctors(req, res) {
+  // Retrieve parameters from URL path using req.query
+  const { first_name, last_name, specialization } = req.query;
+
+  const sql = `SELECT * FROM doctors WHERE first_name or email LIKE ?;`;
+
+  // const values = [
+  //   first_name || null,
+  //   first_name ? `%${first_name}%` : null,
+  //   last_name || null,
+  //   last_name ? `%${last_name}%` : null,
+  //   specialization || null,
+  //   specialization ? `%${specialization}%` : null,
+  // ];
+
+  const value = req.query.firstName || req.query.email;
+
+  connection.query(sql, value, (err, doctors) => {
+    if (err) {
+      return res.status(500).json({ error: 'error' });
+    }
+    res.json(doctors);
   });
 }
 
@@ -18,23 +77,24 @@ function show(req, res) {
   if (isNaN(id)) {
     return res.status(400).json({ error: 'id not found' });
   }
-  const IdSql = `SELECT doctors.*, specializations.name AS specialization, reviews.*
+  const IdSql = `SELECT
+                  doctors.*,
+                  GROUP_CONCAT(DISTINCT specializations.name) AS specializations
                   FROM doctors
                   JOIN doctor_specializations
                   ON doctors.id = doctor_specializations.doctor_id
                   JOIN specializations
                   ON doctor_specializations.specialization_id = specializations.id
-                  JOIN reviews
-                  ON doctors.id = reviews.doctor_id
-                  WHERE doctors.id = ?`;
-  connection.query(IdSql, [id], (err, doctors) => {
+                  WHERE doctors.id = ?
+                  GROUP BY doctors.id`;
+  connection.query(IdSql, [id], (err, doctor) => {
     if (err) {
       return res.status(500).json({ error: 'server error' });
     }
-    if (doctors.length === 0) {
+    if (!doctor) {
       return res.status(404).json({ error: 'Not found' });
     }
-    res.status(200).json({ doctors });
+    res.status(200).json(doctor);
   });
 }
 
@@ -89,6 +149,8 @@ function storeReview(req, res) {
   //id del medico
   const doctorId = parseInt(req.params.id);
 
+  console.log(doctorId);
+
   //recupero parametri dalla body request
   const { firstName, lastName, rating, reviewText } = req.body;
 
@@ -112,7 +174,7 @@ function storeReview(req, res) {
 
   connection.query(
     sql,
-    [firstName.trim(), lastName.trim(), reviewText.trim(), rating, doctorId],
+    [firstName.trim(), lastName.trim(), reviewText && reviewText.trim(), rating, doctorId],
     (err, results) => {
       if (err) return res.status(500).json({ message: err.message });
 
