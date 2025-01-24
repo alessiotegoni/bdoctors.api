@@ -1,4 +1,4 @@
-const connection = require('../data/db');
+const connection = require("../data/db");
 
 function index(req, res) {
   // const { firstName } = req.query;
@@ -18,21 +18,21 @@ JOIN specializations
     ON doctor_specializations.specialization_id = specializations.id
 LEFT JOIN reviews
     ON doctors.id = reviews.doctor_id
-GROUP BY doctors.id`;
+    GROUP BY doctors.id`;
 
-  const filter = req.query.filter;
-  console.log(filter);
+  const { doctor, specializations, min_rating } = req.query;
 
-  if (filter) {
-    sql = `SELECT * FROM doctors WHERE first_name OR email LIKE ?;`;
+  console.log(req.query);
 
-    console.log(filter);
+  if (doctor) {
+    sql += ` HAVING concat(first_name, last_name) OR email LIKE ?;`;
 
-    connection.query(sql, `%${[filter]}%`, (err, doctors) => {
-      // console.log(err);
+    console.log(sql);
+
+    connection.query(sql, `%${[doctor]}%`, (err, doctors) => {
       console.log(doctors);
       if (err) {
-        return res.status(500).json({ error: 'error' });
+        return res.status(500).json({ error: "error" });
       }
       res.json(doctors);
     });
@@ -40,42 +40,17 @@ GROUP BY doctors.id`;
   }
 
   connection.query(sql, (err, doctors) => {
-    if (err) res.status(500).json({ err: 'error' });
+    if (err) res.status(500).json({ err: "error" });
     res.json(doctors);
   });
 }
 
 // addind filters with name surname and specializations of doctors
 
-function getFilteredDoctors(req, res) {
-  // Retrieve parameters from URL path using req.query
-  const { first_name, last_name, specialization } = req.query;
-
-  const sql = `SELECT * FROM doctors WHERE first_name or email LIKE ?;`;
-
-  // const values = [
-  //   first_name || null,
-  //   first_name ? `%${first_name}%` : null,
-  //   last_name || null,
-  //   last_name ? `%${last_name}%` : null,
-  //   specialization || null,
-  //   specialization ? `%${specialization}%` : null,
-  // ];
-
-  const value = req.query.firstName || req.query.email;
-
-  connection.query(sql, value, (err, doctors) => {
-    if (err) {
-      return res.status(500).json({ error: 'error' });
-    }
-    res.json(doctors);
-  });
-}
-
 function show(req, res) {
   const id = parseInt(req.params.id);
   if (isNaN(id)) {
-    return res.status(400).json({ error: 'id not found' });
+    return res.status(400).json({ error: "id not found" });
   }
   const IdSql = `SELECT doctors.*, specializations.name AS specialization, reviews.*
                   FROM doctors
@@ -88,24 +63,27 @@ function show(req, res) {
                   WHERE doctors.id = ?`;
   connection.query(IdSql, [id], (err, doctors) => {
     if (err) {
-      return res.status(500).json({ error: 'server error' });
+      return res.status(500).json({ error: "server error" });
     }
     if (doctors.length === 0) {
-      return res.status(404).json({ error: 'Not found' });
+      return res.status(404).json({ error: "Not found" });
     }
     res.status(200).json({ doctors });
   });
 }
 
 function getDoctorsSpecializations(_, res) {
-  connection.query('SELECT * FROM specializations', (err, specializations) => {
+  connection.query("SELECT * FROM specializations", (err, specializations) => {
     if (err) throw new Error(err.message);
-    res.status(200).json(specializations.map((s) => ({ value: s.id, label: s.name })));
+    res
+      .status(200)
+      .json(specializations.map((s) => ({ value: s.id, label: s.name })));
   });
 }
 
 function storeDoctor(req, res) {
-  const { firstName, lastName, email, phone, address, specializationsIds } = req.body;
+  const { firstName, lastName, email, phone, address, specializationsIds } =
+    req.body;
 
   if (
     !firstName ||
@@ -113,20 +91,21 @@ function storeDoctor(req, res) {
     firstName.length < 3 ||
     !lastName ||
     lastName.length > 50 ||
-    typeof firstName !== 'string' ||
-    typeof lastName !== 'string' ||
-    !email.includes('@') ||
-    !email.includes('.') ||
+    typeof firstName !== "string" ||
+    typeof lastName !== "string" ||
+    !email.includes("@") ||
+    !email.includes(".") ||
     !phone ||
     phone.length < 5 ||
-    typeof phone !== 'string' ||
+    typeof phone !== "string" ||
     !address ||
     address.length < 5 ||
     !specializationsIds
   ) {
     return res.status(400).json({
-      error: 'Missing required fields',
-      message: 'First name, last name, specializations and address are required',
+      error: "Missing required fields",
+      message:
+        "First name, last name, specializations and address are required",
     });
   }
 
@@ -139,31 +118,38 @@ function storeDoctor(req, res) {
       return res.status(500).json({ message: err.message });
     }
     if (results.length > 0) {
-      return res.status(400).json({ message: 'email already registered' });
+      return res.status(400).json({ message: "email already registered" });
     }
 
     //se la mail non esiste allora si procede alla creazione di un nuovo dottore
     const sql = `INSERT INTO doctors (first_name, last_name, email, phone, address) VALUES (?, ?, ?, ?, ?)`;
 
-    connection.query(sql, [firstName, lastName, email, phone, address], (err, results) => {
-      if (err) {
-        return res.status(500).json({ message: err.message });
+    connection.query(
+      sql,
+      [firstName, lastName, email, phone, address],
+      (err, results) => {
+        if (err) {
+          return res.status(500).json({ message: err.message });
+        }
+
+        const sql2 = `INSERT INTO doctor_specializations (doctor_id, specialization_id) VALUES ?`;
+
+        const newId = results.insertId;
+
+        //array di coppia [id Dottore - id specializzazione] che saranno eseguiti in query
+        //utilizzando questo metodo con una sola query è possibile inserire piú righe nella tabella ponte
+        const values = specializationsIds.map((specialization) => [
+          newId,
+          specialization,
+        ]);
+
+        //aggiunta nella tabella ponte id dottore creato ed id specializzazioni
+        connection.query(sql2, [values], (err, _) => {
+          if (err) return res.status(500).json({ message: err.message });
+          return res.status(201).json(newId);
+        });
       }
-
-      const sql2 = `INSERT INTO doctor_specializations (doctor_id, specialization_id) VALUES ?`;
-
-      const newId = results.insertId;
-
-      //array di coppia [id Dottore - id specializzazione] che saranno eseguiti in query
-      //utilizzando questo metodo con una sola query è possibile inserire piú righe nella tabella ponte
-      const values = specializationsIds.map((specialization) => [newId, specialization]);
-
-      //aggiunta nella tabella ponte id dottore creato ed id specializzazioni
-      connection.query(sql2, [values], (err, _) => {
-        if (err) return res.status(500).json({ message: err.message });
-        return res.status(201).json(newId);
-      });
-    });
+    );
   });
 }
 
@@ -181,13 +167,13 @@ function storeReview(req, res) {
     !firstName ||
     firstName.length > 50 ||
     firstName.length < 3 ||
-    typeof firstName !== 'string' ||
+    typeof firstName !== "string" ||
     rating < 1 ||
     rating > 5
   ) {
     return res.status(400).json({
-      error: 'Missing required fields',
-      message: 'name and vote are required',
+      error: "Missing required fields",
+      message: "name and vote are required",
     });
   }
 
@@ -196,7 +182,13 @@ function storeReview(req, res) {
 
   connection.query(
     sql,
-    [firstName.trim(), lastName.trim(), reviewText && reviewText.trim(), rating, doctorId],
+    [
+      firstName.trim(),
+      lastName.trim(),
+      reviewText && reviewText.trim(),
+      rating,
+      doctorId,
+    ],
     (err, results) => {
       if (err) return res.status(500).json({ message: err.message });
 
