@@ -28,7 +28,7 @@ function index(req, res) {
     queryParams.push(`%${doctor}%`, `%${doctor}%`);
   }
 
-  if (specializations?.length) {
+  if (Array.isArray(specializations) && specializations.length) {
     const specializationIds = specializations.map((id) => parseInt(id.trim()));
     havingConditions.push(
       `GROUP_CONCAT(DISTINCT specializations.id ORDER BY specializations.id SEPARATOR ',') LIKE ?`
@@ -70,23 +70,15 @@ function show(req, res) {
                   JOIN reviews
                   ON doctors.id = reviews.doctor_id
                   WHERE doctors.id = ?`;
-  connection.query(IdSql, [id], (err, doctors) => {
+  connection.query(IdSql, [id], (err, [doctors]) => {
     if (err) {
       return res.status(500).json({ error: "server error" });
     }
-    if (doctors.length === 0) {
+
+    if (!doctors) {
       return res.status(404).json({ error: "Not found" });
     }
-    res.status(200).json({ doctors });
-  });
-}
-
-function getDoctorsSpecializations(_, res) {
-  connection.query("SELECT * FROM specializations", (err, specializations) => {
-    if (err) throw new Error(err.message);
-    res
-      .status(200)
-      .json(specializations.map((s) => ({ value: s.id, label: s.name })));
+    res.status(200).json(doctors);
   });
 }
 
@@ -207,7 +199,6 @@ function storeReview(req, res) {
 module.exports = {
   index,
   show,
-  getDoctorsSpecializations,
   storeDoctor,
   storeReview,
 };

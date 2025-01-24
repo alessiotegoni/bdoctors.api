@@ -1,7 +1,8 @@
 //express base config
-const express = require('express');
-const doctorRouter = require('./routes/doctorRouter');
-const cors = require('cors');
+const express = require("express");
+const doctorRouter = require("./routes/doctorRouter");
+const specializationRouter = require("./routes/specializationRouter");
+const cors = require("cors");
 
 // dotenv.config()
 
@@ -9,8 +10,8 @@ const app = express();
 const PORT = process.env.PORT;
 
 //middlewares
-const errorsHandler = require('./middlewares/errorsHandler');
-const notFound = require('./middlewares/notFound');
+const errorsHandler = require("./middlewares/errorsHandler");
+const notFound = require("./middlewares/notFound");
 
 // cors
 
@@ -20,7 +21,8 @@ app.use(cors(process.env.FRONTEND_URL));
 app.use(express.json());
 
 //routes
-app.use('/doctors', doctorRouter);
+app.use("/doctors", doctorRouter);
+app.use("/specializations", specializationRouter);
 
 app.use(notFound);
 app.use(errorsHandler);
