@@ -64,15 +64,16 @@ function show(req, res) {
   if (isNaN(id)) {
     return res.status(400).json({ error: 'id not found' });
   }
-  const IdSql = `SELECT doctors.*, GROUP_CONCAT(DISTINCT specializations.name ORDER BY specializations.name SEPARATOR ', ') AS specializations, reviews.*
+  const IdSql = `SELECT
+                  doctors.*,
+                  GROUP_CONCAT(DISTINCT specializations.name) AS specializations
                   FROM doctors
                   JOIN doctor_specializations
                   ON doctors.id = doctor_specializations.doctor_id
                   JOIN specializations
                   ON doctor_specializations.specialization_id = specializations.id
-                  JOIN reviews
-                  ON doctors.id = reviews.doctor_id
                   WHERE doctors.id = ?
+                  GROUP BY doctors.id
                   `;
   connection.query(IdSql, [id], (err, doctor) => {
     if (!doctor?.length) {
