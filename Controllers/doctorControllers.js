@@ -28,7 +28,7 @@ function index(req, res) {
     queryParams.push(`%${doctor}%`, `%${doctor}%`);
   }
 
-  if (specializations?.length) {
+  if (Array.isArray(specializations) && specializations.length) {
     const specializationIds = specializations.map((id) => parseInt(id.trim()));
     havingConditions.push(
       `GROUP_CONCAT(DISTINCT specializations.id ORDER BY specializations.id SEPARATOR ',') LIKE ?`
@@ -64,36 +64,57 @@ function show(req, res) {
   if (isNaN(id)) {
     return res.status(400).json({ error: 'id not found' });
   }
-  const IdSql = `SELECT
-                  doctors.*,
-                  GROUP_CONCAT(DISTINCT specializations.name) AS specializations
+  const IdSql = `SELECT doctors.*, GROUP_CONCAT(DISTINCT specializations.name ORDER BY specializations.name SEPARATOR ', ') AS specializations, reviews.*
                   FROM doctors
                   JOIN doctor_specializations
                   ON doctors.id = doctor_specializations.doctor_id
                   JOIN specializations
                   ON doctor_specializations.specialization_id = specializations.id
+                  JOIN reviews
+                  ON doctors.id = reviews.doctor_id
                   WHERE doctors.id = ?
-                  GROUP BY doctors.id`;
-  connection.query(IdSql, [id], (err, [doctor]) => {
-    if (err) {
-      return res.status(500).json({ error: 'server error' });
-    }
-    if (!doctor) {
+                  `;
+  connection.query(IdSql, [id], (err, doctor) => {
+    if (!doctor?.length) {
       return res.status(404).json({ error: 'Not found' });
     }
-    res.status(200).json(doctor);
-  });
-}
 
-function getDoctorsSpecializations(_, res) {
-  connection.query('SELECT * FROM specializations', (err, specializations) => {
-    if (err) throw new Error(err.message);
-    res.status(200).json(specializations.map((s) => ({ value: s.id, label: s.name })));
+    connection.query(
+      'SELECT * FROM reviews WHERE doctor_id = ?',
+      [doctor[0].id],
+      (err, reviews) => {
+        res.status(200).json({ ...doctor[0], reviews: reviews ?? [] });
+      }
+    );
   });
 }
 
 function storeDoctor(req, res) {
-  const { firstName, lastName, email, phone, address, specializationsIds } = req.body;
+  const { first_name, last_name, email, phone, address, specializationsIds } = req.body;
+
+  // if (
+  //   !first_name ||
+  //   first_name.length > 50 ||
+  //   first_name.length < 3 ||
+  //   !last_name ||
+  //   last_name.length > 50 ||
+  //   typeof first_name !== "string" ||
+  //   typeof last_name !== "string" ||
+  //   !email.includes("@") ||
+  //   !email.includes(".") ||
+  //   !phone ||
+  //   phone.length < 5 ||
+  //   typeof phone !== "string" ||
+  //   !address ||
+  //   address.length < 5 ||
+  //   !specializationsIds
+  // ) {
+  //   return res.status(400).json({
+  //     error: "Missing required fields",
+  //     message:
+  //       "First name, last name, specializations and address are required",
+  //   });
+  // }
 
   //aggiunta nuovo dottore al database
   //cerco in database se la mail inserita risulta già registrata
@@ -137,14 +158,14 @@ function storeReview(req, res) {
   const doctorId = parseInt(req.params.id);
 
   //recupero parametri dalla body request
-  const { firstName, lastName, rating, reviewText } = req.body;
+  const { first_name, last_name, rating, review_text } = req.body;
 
   //campi nome e voto necessari
   if (
-    !firstName ||
-    firstName.length > 50 ||
-    firstName.length < 3 ||
-    typeof firstName !== 'string' ||
+    !first_name ||
+    first_name.length > 50 ||
+    first_name.length < 3 ||
+    typeof first_name !== 'string' ||
     rating < 1 ||
     rating > 5
   ) {
@@ -159,7 +180,7 @@ function storeReview(req, res) {
 
   connection.query(
     sql,
-    [firstName.trim(), lastName.trim(), reviewText && reviewText.trim(), rating, doctorId],
+    [first_name.trim(), lastName.trim(), reviewText && reviewText.trim(), rating, doctorId],
     (err, results) => {
       if (err) return res.status(500).json({ message: err.message });
 
@@ -171,7 +192,6 @@ function storeReview(req, res) {
 module.exports = {
   index,
   show,
-  getDoctorsSpecializations,
   storeDoctor,
   storeReview,
 };
