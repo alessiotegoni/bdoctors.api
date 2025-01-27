@@ -1,6 +1,7 @@
 function errorsHandler(err, _, res, _) {
+  // console.log(err);
   if (err)
-    res.status(err.status).json({
+    return res.status(err.status || 500).json({
       message: err.message,
     });
 }

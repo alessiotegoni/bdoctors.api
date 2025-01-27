@@ -15,7 +15,7 @@ const notFound = require("./middlewares/notFound");
 
 // cors
 
-app.use(cors(process.env.FRONTEND_URL));
+app.use(cors());
 
 //body parser
 app.use(express.json());

@@ -50,11 +50,14 @@ function index(req, res) {
       console.error(err);
       return res.status(500).json({ error: 'error' });
     }
+    if (!doctors.length === 0) {
+      return res.status(404).json({ error: 'Not found' });
+    }
     res.json(doctors);
   });
 }
 
-// addind filters with name surname and specializations of doctors
+// add filters with name surname and specializations of doctors
 
 function show(req, res) {
   const id = parseInt(req.params.id);
@@ -91,29 +94,6 @@ function show(req, res) {
 
 function storeDoctor(req, res) {
   const { firstName, lastName, email, phone, address, specializationsIds } = req.body;
-
-  if (
-    !firstName ||
-    firstName.length > 50 ||
-    firstName.length < 3 ||
-    !lastName ||
-    lastName.length > 50 ||
-    typeof firstName !== 'string' ||
-    typeof lastName !== 'string' ||
-    !email.includes('@') ||
-    !email.includes('.') ||
-    !phone ||
-    phone.length < 5 ||
-    typeof phone !== 'string' ||
-    !address ||
-    address.length < 5 ||
-    !specializationsIds
-  ) {
-    return res.status(400).json({
-      error: 'Missing required fields',
-      message: 'First name, last name, specializations and address are required',
-    });
-  }
 
   //aggiunta nuovo dottore al database
   //cerco in database se la mail inserita risulta già registrata
@@ -157,7 +137,7 @@ function storeReview(req, res) {
   const doctorId = parseInt(req.params.id);
 
   //recupero parametri dalla body request
-  const { firstName, lastName, rating, review_text } = req.body;
+  const { firstName, lastName, rating, reviewText } = req.body;
 
   //campi nome e voto necessari
   if (
@@ -170,7 +150,7 @@ function storeReview(req, res) {
   ) {
     return res.status(400).json({
       error: 'Missing required fields',
-      message: 'name and vote are required',
+      message: 'e are required',
     });
   }
 
@@ -179,7 +159,7 @@ function storeReview(req, res) {
 
   connection.query(
     sql,
-    [firstName.trim(), lastName.trim(), review_text && review_text.trim(), rating, doctorId],
+    [firstName.trim(), lastName.trim(), reviewText && reviewText.trim(), rating, doctorId],
     (err, results) => {
       if (err) return res.status(500).json({ message: err.message });
 

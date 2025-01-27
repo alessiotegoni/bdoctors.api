@@ -13,7 +13,7 @@ const rules = {
   email: {
     min: 3,
     max: 50,
-    isRequired: ['@', '.'],
+    isRequired: ['@', '.com'],
   },
   phone: {
     min: 3,
@@ -29,6 +29,15 @@ const rules = {
   },
 };
 
+/**
+ * Questa funzione, come le altre non ritorna alcun valore ma modifica l'oggetto errors passato come parametro
+ *
+ * @param {object} errors oggetto che contiene i messaggi di errore per ogni input e che serve a poter fermare la funzione e mandare un codice di errore se la validazione fallisce
+ * @param {string} key
+ * @param {string} value valore della chiave dsa validare dell'oggetto input
+ * @param {Array} isRequired array di caratteri richiesti per rendere la stringa valida
+ * @returns
+ */
 function validateEmail(errors, key, value, isRequired = []) {
   //ciclo for per il controllo di ogni carattere
   for (let i = 0; i < isRequired.length; i++) {
@@ -43,6 +52,14 @@ function validateEmail(errors, key, value, isRequired = []) {
   return errors;
 }
 
+/**
+ *
+ * @param {object} errors oggetto che contiene i messaggi di errore per ogni input e che serve a poter fermare la funzione e mandare un codice di errore se la validazione fallisce
+ * @param {string} key
+ * @param {string} value valore della chiave daa validare dell'oggetto input
+ * @param {Array} startsWith array di caratteri che devono essere presenti all'inizio della stringa da validare
+ * @returns
+ */
 function validateAddress(errors, key, value, startsWith = []) {
   //split per controllare il la prima parola dell'indirizzo
   const address = value.toLowerCase().split(' '); //trasformo in array la stringa da validare in modo da poter accedere alla prima parola (index 0)
@@ -50,8 +67,6 @@ function validateAddress(errors, key, value, startsWith = []) {
   //ciclo for per il controllo di ogni carattere
   for (let i = 0; i < startsWith.length; i++) {
     if (address[0] !== startsWith[0].toLowerCase() && address[0] !== startsWith[1].toLowerCase()) {
-      // console.log('invio header address function');
-
       errors[
         key
       ] = `la prima parola dell'indirizzo deve essere ${rules[key].startsWith[0]} o ${rules[key].startsWith[1]}`;
@@ -61,13 +76,20 @@ function validateAddress(errors, key, value, startsWith = []) {
   return errors;
 }
 
-function validatePhone(errors, value) {
+/**
+ *
+ * @param {object} errors oggetto che contiene i messaggi di errore per ogni input e che serve a poter fermare la funzione e mandare un codice di errore se la validazione fallisce
+ * @param {string} key
+ * @param {string} value valore della chiave daa validare dell'oggetto input
+ * @param {Array} specialCharacters array di caratteri che possono essere presenti nella stringa da validare
+ * @returns
+ */
+function validatePhone(errors, value, key) {
   //ciclo for per il controllo di ogni carattere
   for (let i = 0; i < value.length; i++) {
     //controllo che nel numero non sia presente il simbolo + ma che possa esserlo solo all'inizio
     if (value.includes('+') && value.indexOf('+') !== 0) {
       // console.log('invio header phone function');
-      // errors[key].push("il simbolo + puo' essere presente solo all' inizio del numero");
       errors[key] = "il simbolo + puo' essere presente solo all' inizio del numero";
     }
   }
@@ -99,12 +121,13 @@ function validateInput(req, res, next) {
     //controllo che i campi siano stringhe
     if (typeof value !== 'string') {
       // console.log('invio header string function');
-      // errors[key].push(`${key} deve essere una stringa`);
       errors[key] = `${key} deve essere una stringa`;
     }
 
     //controllo lunghezza minima e massima per tutti i campi
     if (value.length > rule.max || value.length < rule.min) {
+      // console.log('invio header length function');;
+
       errors[
         key
       ] = `la lunghezza di ${key} deve essere compresa tra ${rules[key].min} e ${rules[key].max} caratteri`;
@@ -113,6 +136,7 @@ function validateInput(req, res, next) {
     //controllo mail
     if (key === 'email') {
       validateEmail(errors, key, value, rule.isRequired);
+      // console.log(errors);
     }
 
     //controllo indirizzo
@@ -122,12 +146,13 @@ function validateInput(req, res, next) {
 
     //controllo phone
     if (key === 'phone') {
-      validatePhone(errors, value);
+      validatePhone(errors, value, key);
     }
 
     // Se ci sono errori, passa l'errore al middleware di gestione degli errori
+    console.log(errors);
     if (Object.values(errors).some((err) => err.length > 0)) {
-      return next({ status: 400, message: errors[key], errors });
+      return res.status(400).json({ message: errors[key] });
     }
   }
 
