@@ -91,7 +91,7 @@ function show(req, res) {
 }
 
 function storeDoctor(req, res) {
-  const { first_name, last_name, email, phone, address, specializationsIds } = req.body;
+  const { firstName, lastName, email, phone, address, specializationsIds } = req.body;
 
   // if (
   //   !first_name ||
@@ -159,14 +159,14 @@ function storeReview(req, res) {
   const doctorId = parseInt(req.params.id);
 
   //recupero parametri dalla body request
-  const { first_name, last_name, rating, review_text } = req.body;
+  const { firstName, lastName, rating, reviewText } = req.body;
 
   //campi nome e voto necessari
   if (
-    !first_name ||
-    first_name.length > 50 ||
-    first_name.length < 3 ||
-    typeof first_name !== 'string' ||
+    !firstName ||
+    firstName.length > 50 ||
+    firstName.length < 3 ||
+    typeof firstName !== 'string' ||
     rating < 1 ||
     rating > 5
   ) {
