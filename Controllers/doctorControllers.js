@@ -23,7 +23,7 @@ function index(req, res) {
 
   if (doctor) {
     havingConditions.push(
-      `(LOWER(CONCAT(doctors.firstName, ' ', doctors.lastName)) LIKE ? OR doctors.email LIKE ?)`
+      `(LOWER(CONCAT(doctors.first_name, ' ', doctors.last_name)) LIKE ? OR doctors.email LIKE ?)`
     );
     queryParams.push(`%${doctor}%`, `%${doctor}%`);
   }
@@ -148,7 +148,7 @@ function storeReview(req, res) {
   }
 
   //query
-  const sql = `INSERT INTO reviews (firstName, lastName, review_text, rating, doctor_id) VALUES (?,?,?,?,?)`;
+  const sql = `INSERT INTO reviews (first_name, last_name, review_text, rating, doctor_id) VALUES (?,?,?,?,?)`;
 
   connection.query(
     sql,
