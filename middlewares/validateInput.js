@@ -2,11 +2,11 @@
 //creare un oggetto rules con le regole di ogni input da controllare
 
 const rules = {
-  firstName: {
+  first_name: {
     min: 3,
     max: 50,
   },
-  lastName: {
+  last_name: {
     min: 3,
     max: 50,
   },
@@ -101,8 +101,8 @@ function validateInput(req, res, next) {
   const input = req.body;
 
   const errors = {
-    firstName: '',
-    lastName: '',
+    first_name: '',
+    last_name: '',
     email: '',
     phone: '',
     address: '',

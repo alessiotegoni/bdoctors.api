@@ -18,6 +18,6 @@ router.get('/:id', show);
 // router.get('/:first_name?/:last_name?/:specializations?', getFilteredDoctors);
 
 router.post('/', validateInput, storeDoctor);
-router.post('/:id/review', storeReview);
+router.post('/:id/review', validateInput, storeReview);
 
 module.exports = router;
