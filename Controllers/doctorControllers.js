@@ -93,7 +93,7 @@ function show(req, res) {
 }
 
 function storeDoctor(req, res) {
-  const { firstName, lastName, email, phone, address, specializationsIds } = req.body;
+  const { first_name, last_name, email, phone, address, specializationsIds } = req.body;
 
   //aggiunta nuovo dottore al database
   //cerco in database se la mail inserita risulta già registrata
@@ -110,7 +110,7 @@ function storeDoctor(req, res) {
     //se la mail non esiste allora si procede alla creazione di un nuovo dottore
     const sql = `INSERT INTO doctors (first_name, last_name, email, phone, address) VALUES (?, ?, ?, ?, ?)`;
 
-    connection.query(sql, [firstName, lastName, email, phone, address], (err, results) => {
+    connection.query(sql, [first_name, last_name, email, phone, address], (err, results) => {
       if (err) {
         return res.status(500).json({ message: err.message });
       }
@@ -137,20 +137,13 @@ function storeReview(req, res) {
   const doctorId = parseInt(req.params.id);
 
   //recupero parametri dalla body request
-  const { firstName, lastName, rating, reviewText } = req.body;
+  const { first_name, last_name, rating, review_text } = req.body;
 
   //campi nome e voto necessari
-  if (
-    !firstName ||
-    firstName.length > 50 ||
-    firstName.length < 3 ||
-    typeof firstName !== 'string' ||
-    rating < 1 ||
-    rating > 5
-  ) {
+  if (rating < 1 || rating > 5) {
     return res.status(400).json({
       error: 'Missing required fields',
-      message: 'e are required',
+      message: 'Rating must be between 1 and 5',
     });
   }
 
@@ -159,7 +152,7 @@ function storeReview(req, res) {
 
   connection.query(
     sql,
-    [firstName.trim(), lastName.trim(), reviewText && reviewText.trim(), rating, doctorId],
+    [first_name.trim(), last_name.trim(), review_text && review_text.trim(), rating, doctorId],
     (err, results) => {
       if (err) return res.status(500).json({ message: err.message });
 
