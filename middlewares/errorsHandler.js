@@ -1,7 +1,7 @@
 function errorsHandler(err, _, res, _) {
-  // console.log(err);
+  console.error(err.stack);
   if (err)
-    return res.status(err.status || 500).json({
+    return res.status(500).json({
       message: err.message,
     });
 }
