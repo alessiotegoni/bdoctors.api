@@ -1,4 +1,5 @@
 const connection = require('../data/db');
+const axios = require('axios');
 
 function index(req, res) {
   let sql = `
@@ -59,7 +60,7 @@ function index(req, res) {
 
 // add filters with name surname and specializations of doctors
 
-function show(req, res) {
+async function show(req, res) {
   const id = parseInt(req.params.id);
   if (isNaN(id)) {
     return res.status(400).json({ error: 'id not found' });
@@ -75,23 +76,45 @@ function show(req, res) {
                   WHERE doctors.id = ?
                   GROUP BY doctors.id
                   `;
-  connection.query(IdSql, [id], (err, doctor) => {
-    if (!doctor?.length) {
+
+  connection.query(IdSql, [id], async (err, [doctor]) => {
+    if (!doctor) {
       return res.status(404).json({ error: 'Not found' });
     }
 
+    doctor.coordinates = await fetchPlace(doctor.address);
+    console.log(doctor);
+
     connection.query(
       'SELECT * FROM reviews WHERE doctor_id = ?',
-      [doctor[0].id],
-      (err, reviews) => {
-        res.status(200).json({ ...doctor[0], reviews: reviews ?? [] });
+      [doctor.id],
+      (_, reviews) => {
+        return res.status(200).json({ ...doctor, reviews: reviews ?? [] });
       }
     );
   });
+
+  async function fetchPlace(address) {
+    const result = await axios
+      .get(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${address}&key=AIzaSyAW9PLxid68ePyYnGt5u5JuanyCBk47F4g`
+      )
+      .then((response) => {
+        console.log(response.data.results[0].geometry.location);
+        return response.data.results[0].geometry.location;
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+
+    return result;
+    //obj.geometry.location.lat || .lng
+  }
 }
 
 function storeDoctor(req, res) {
-  const { first_name, last_name, email, phone, address, specializationsIds } = req.body;
+  const { first_name, last_name, email, phone, address, specializationsIds } =
+    req.body;
 
   //aggiunta nuovo dottore al database
   //cerco in database se la mail inserita risulta già registrata
@@ -108,25 +131,32 @@ function storeDoctor(req, res) {
     //se la mail non esiste allora si procede alla creazione di un nuovo dottore
     const sql = `INSERT INTO doctors (first_name, last_name, email, phone, address) VALUES (?, ?, ?, ?, ?)`;
 
-    connection.query(sql, [first_name, last_name, email, phone, address], (err, results) => {
-      if (err) {
-        return res.status(500).json({ message: err.message });
+    connection.query(
+      sql,
+      [first_name, last_name, email, phone, address],
+      (err, results) => {
+        if (err) {
+          return res.status(500).json({ message: err.message });
+        }
+
+        const sql2 = `INSERT INTO doctor_specializations (doctor_id, specialization_id) VALUES ?`;
+
+        const newId = results.insertId;
+
+        //array di coppia [id Dottore - id specializzazione] che saranno eseguiti in query
+        //utilizzando questo metodo con una sola query è possibile inserire piú righe nella tabella ponte
+        const values = specializationsIds.map((specialization) => [
+          newId,
+          specialization,
+        ]);
+
+        //aggiunta nella tabella ponte id dottore creato ed id specializzazioni
+        connection.query(sql2, [values], (err, _) => {
+          if (err) return res.status(500).json({ message: err.message });
+          return res.status(201).json(newId);
+        });
       }
-
-      const sql2 = `INSERT INTO doctor_specializations (doctor_id, specialization_id) VALUES ?`;
-
-      const newId = results.insertId;
-
-      //array di coppia [id Dottore - id specializzazione] che saranno eseguiti in query
-      //utilizzando questo metodo con una sola query è possibile inserire piú righe nella tabella ponte
-      const values = specializationsIds.map((specialization) => [newId, specialization]);
-
-      //aggiunta nella tabella ponte id dottore creato ed id specializzazioni
-      connection.query(sql2, [values], (err, _) => {
-        if (err) return res.status(500).json({ message: err.message });
-        return res.status(201).json(newId);
-      });
-    });
+    );
   });
 }
 
@@ -137,20 +167,18 @@ function storeReview(req, res) {
   //recupero parametri dalla body request
   const { first_name, last_name, rating, review_text } = req.body;
 
-  //campi nome e voto necessari
-  if (rating < 1 || rating > 5) {
-    return res.status(400).json({
-      error: 'Missing required fields',
-      message: 'Rating must be between 1 and 5',
-    });
-  }
-
   //query
   const sql = `INSERT INTO reviews (first_name, last_name, review_text, rating, doctor_id) VALUES (?,?,?,?,?)`;
 
   connection.query(
     sql,
-    [first_name.trim(), last_name.trim(), review_text && review_text.trim(), rating, doctorId],
+    [
+      first_name.trim(),
+      last_name.trim(),
+      review_text && review_text.trim(),
+      rating,
+      doctorId,
+    ],
     (err, results) => {
       if (err) return res.status(500).json({ message: err.message });
 
