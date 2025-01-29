@@ -60,7 +60,7 @@ function index(req, res) {
 
 // add filters with name surname and specializations of doctors
 
-async function show(req, res) {
+function show(req, res) {
   const id = parseInt(req.params.id);
   if (isNaN(id)) {
     return res.status(400).json({ error: 'id not found' });
@@ -97,10 +97,10 @@ async function show(req, res) {
   async function fetchPlace(address) {
     const result = await axios
       .get(
-        `https://maps.googleapis.com/maps/api/geocode/json?address=${address}&key=AIzaSyAW9PLxid68ePyYnGt5u5JuanyCBk47F4g`
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${address}&key=${process.env.GOOGLE_MAPS_API_KEY}`
       )
       .then((response) => {
-        console.log(response.data.results[0].geometry.location);
+        // console.log(response.data.results[0].geometry.location);
         return response.data.results[0].geometry.location;
       })
       .catch((err) => {
@@ -172,13 +172,7 @@ function storeReview(req, res) {
 
   connection.query(
     sql,
-    [
-      first_name.trim(),
-      last_name.trim(),
-      review_text && review_text.trim(),
-      rating,
-      doctorId,
-    ],
+    [first_name, last_name, review_text, rating, doctorId],
     (err, results) => {
       if (err) return res.status(500).json({ message: err.message });
 
