@@ -20,6 +20,8 @@ function index(req, res) {
 
   const { doctor, specializations, min_rating } = req.query;
 
+  console.log(req.query);
+
   let havingConditions = [];
   let queryParams = [];
 
@@ -55,7 +57,8 @@ function index(req, res) {
     if (!doctors.length === 0) {
       return res.status(404).json({ error: 'Not found' });
     }
-    res.json(doctors);
+
+    return res.json(doctors);
   });
 }
 
@@ -65,6 +68,8 @@ function show(req, res) {
   let id = parseInt(req.params.id);
 
   if (isNaN(id)) {
+    // id = req.params.slug;
+    console.log(req.params);
     return res.status(400).json({ error: 'id not found' });
   }
   const IdSql = `SELECT
@@ -86,16 +91,6 @@ function show(req, res) {
 
     doctor.coordinates = await fetchPlace(doctor.address);
     console.log(doctor);
-
-    //slug
-    const slug = slugify(
-      `${doctor.first_name} ${doctor.last_name} ${doctor.id}`,
-      { lower: true }
-    );
-
-    doctor.slug = slug;
-
-    // console.log('slug', slug);
 
     connection.query(
       'SELECT * FROM reviews WHERE doctor_id = ?',
@@ -132,6 +127,7 @@ function storeDoctor(req, res) {
   //cerco in database se la mail inserita risulta già registrata
   const mailSql = `SELECT * FROM doctors WHERE email = ?`;
 
+  //query email check
   connection.query(mailSql, [email], (err, results) => {
     if (err) {
       return res.status(500).json({ message: err.message });
@@ -142,7 +138,7 @@ function storeDoctor(req, res) {
 
     //se la mail non esiste allora si procede alla creazione di un nuovo dottore
     const sql = `INSERT INTO doctors (first_name, last_name, email, phone, address) VALUES (?, ?, ?, ?, ?)`;
-
+    //query doctor spec
     connection.query(
       sql,
       [first_name, last_name, email, phone, address],
@@ -154,6 +150,20 @@ function storeDoctor(req, res) {
         const sql2 = `INSERT INTO doctor_specializations (doctor_id, specialization_id) VALUES ?`;
 
         const newId = results.insertId;
+
+        //slug creation
+        const slug = slugify(`${first_name} ${last_name} ${newId}`, {
+          lower: true,
+        });
+
+        //query slug update
+        connection.query(
+          `UPDATE doctors SET slug = ? WHERE id = ?`,
+          [slug, newId],
+          (err, _) => {
+            if (err) return res.status(500).json({ message: err.message });
+          }
+        );
 
         //array di coppia [id Dottore - id specializzazione] che saranno eseguiti in query
         //utilizzando questo metodo con una sola query è possibile inserire piú righe nella tabella ponte
