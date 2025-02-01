@@ -1,3 +1,4 @@
+const slugify = require('slugify');
 const connection = require('../data/db');
 const axios = require('axios');
 
@@ -61,7 +62,8 @@ function index(req, res) {
 // add filters with name surname and specializations of doctors
 
 function show(req, res) {
-  const id = parseInt(req.params.id);
+  let id = parseInt(req.params.id);
+
   if (isNaN(id)) {
     return res.status(400).json({ error: 'id not found' });
   }
@@ -84,6 +86,16 @@ function show(req, res) {
 
     doctor.coordinates = await fetchPlace(doctor.address);
     console.log(doctor);
+
+    //slug
+    const slug = slugify(
+      `${doctor.first_name} ${doctor.last_name} ${doctor.id}`,
+      { lower: true }
+    );
+
+    doctor.slug = slug;
+
+    // console.log('slug', slug);
 
     connection.query(
       'SELECT * FROM reviews WHERE doctor_id = ?',

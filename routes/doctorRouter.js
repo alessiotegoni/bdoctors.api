@@ -4,7 +4,7 @@ const {
   show,
   storeDoctor,
   storeReview,
-} = require('../controllers/doctorControllers');
+} = require('../Controllers/doctorControllers');
 
 const validateReview = require('../middlewares/validateReview');
 const validateDoctor = require('../middlewares/validateDoctor');
