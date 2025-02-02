@@ -66,7 +66,9 @@ function index(req, res) {
 
 function show(req, res) {
   const id = parseInt(req.params.id);
+
   let slug;
+
 
   if (isNaN(id)) {
     // id = req.params.slug;
@@ -89,6 +91,7 @@ function show(req, res) {
                   GROUP BY doctors.id
                   `;
 
+
   connection.query(IdSql, [id, `${slug}`], async (err, results) => {
     console.log('fetching doctor');
 
@@ -100,6 +103,7 @@ function show(req, res) {
     filteredDoctor = results[0];
 
     if (!filteredDoctor) {
+
       return res.status(404).json({ error: 'Not found' });
     }
 
