@@ -65,13 +65,18 @@ function index(req, res) {
 // add filters with name surname and specializations of doctors
 
 function show(req, res) {
-  let id = parseInt(req.params.id);
+  const id = parseInt(req.params.id);
+  let slug;
 
   if (isNaN(id)) {
     // id = req.params.slug;
-    console.log(req.params);
-    return res.status(400).json({ error: 'id not found' });
+    slug = req.params.id;
   }
+
+  let filteredDoctor;
+
+  // const slug = req.query.slug;
+  console.log(id, slug);
   const IdSql = `SELECT
                   doctors.*,
                   GROUP_CONCAT(DISTINCT specializations.name) AS specializations
@@ -80,26 +85,38 @@ function show(req, res) {
                   ON doctors.id = doctor_specializations.doctor_id
                   JOIN specializations
                   ON doctor_specializations.specialization_id = specializations.id
-                  WHERE doctors.id = ?
+                  WHERE doctors.id = '?' OR doctors.slug = ?                 
                   GROUP BY doctors.id
                   `;
 
-  connection.query(IdSql, [id], async (err, [doctor]) => {
-    if (!doctor) {
+  connection.query(IdSql, [id, `${slug}`], async (err, results) => {
+    console.log('fetching doctor');
+
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'error' });
+    }
+
+    filteredDoctor = results[0];
+
+    if (!filteredDoctor) {
       return res.status(404).json({ error: 'Not found' });
     }
 
-    doctor.coordinates = await fetchPlace(doctor.address);
-    console.log(doctor);
+    filteredDoctor.coordinates = await fetchPlace(filteredDoctor.address);
 
     connection.query(
       'SELECT * FROM reviews WHERE doctor_id = ?',
-      [doctor.id],
+      [filteredDoctor.id],
       (_, reviews) => {
-        return res.status(200).json({ ...doctor, reviews: reviews ?? [] });
+        return res
+          .status(200)
+          .json({ ...filteredDoctor, reviews: reviews ?? [] });
       }
     );
   });
+
+  // res.json(filteredDoctor);
 
   async function fetchPlace(address) {
     const result = await axios

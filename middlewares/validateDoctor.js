@@ -32,8 +32,7 @@ const validateDoctor = [
     // .isMobilePhone('it-IT', { strictMode: false })
     .matches(/^\+?\d+$/)
     .withMessage(
-      'Il numero di telefono puo essere composto solo da numeri e contenere un ' +
-        " solo all'inizio"
+      `Il numero di telefono puo essere composto solo da numeri e contenere un simbolo + solo all'inizio`
     ),
   //address
   body('address')
@@ -46,8 +45,9 @@ const validateDoctor = [
     if (!errors.isEmpty()) {
       // Se ci sono errori, restituisci un errore 400 con i dettagli dei campi che non hanno superato la validazione
       return res.status(400).json({ errors: errors.array() });
+    } else {
+      next(); // Se tutto è valido, passa alla funzione successiva
     }
-    next(); // Se tutto è valido, passa alla funzione successiva
   },
 ];
 
